@@ -7,28 +7,25 @@
 #include "cache.cpp"
 #include "cpu.cpp"
 
+// THINGS I WANT TO ADD:
+// pipelining
+// better cache -> last recently used eviction
+
 int main() {
     using Op = Opcode;
     printf("hello cpu test\n\n");
+
     std::vector<Instruction> prog = {
-    // x1 = 256  (base address)
-        {Opcode::ADDI, 1, 0, 0, 256},
-
-        // x2 = 42   (value to store)
-        {Opcode::ADDI, 2, 0, 0, 42},
-
-        // MEM[x1 + 0] = x2   → cold store
-        {Opcode::STORE, 0, 1, 2, 0},
-
-        // Repeated loads from same address
-        {Opcode::LOAD, 3, 2, 0, 0},   // MISS
-        {Opcode::LOAD, 4, 1, 0, 0},   // HIT
-        {Opcode::LOAD, 5, 1, 0, 0},   // HIT
-        {Opcode::LOAD, 6, 2, 0, 0},   // HIT
-        {Opcode::STORE, 0, 2, 0, 0},
+        {Opcode::ADDI, 1, 0, 0, 1},
+        {Opcode::ADDI, 2, 0, 0, 1},
+        {Opcode::BEQ,  0, 1, 2, 2},   // if x1 == x2, skip next 2
+        {Opcode::ADDI, 3, 0, 0, 99},  // SHOULD BE FLUSHED
+        {Opcode::ADDI, 4, 0, 0, 7},
         {Opcode::HALT}
     };
-    
+
+
+
     CPU cpu(prog);
     cpu.run();
 

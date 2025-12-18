@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "isa.hpp"   // Instruction, Opcode, fields (rd, rs1, rs2, imm), etc.
 #include "cache.hpp" // Cache class
-
+#include "pipeline.hpp"
 
 class CPU {
 public:
@@ -15,6 +15,7 @@ public:
     int32_t reg(int i) const { return regs_[i]; }
     int32_t mem_word(uint32_t addr) const;
 
+    
 private:
     std::vector<Instruction> program_; // program memory
     int32_t regs_[32] = {0}; // 32 registers
@@ -23,9 +24,24 @@ private:
     int pc_ = 0;
     bool running_ = true;
 
+
     Instruction fetch();
 
     void execute(const Instruction& instr);
-
     void enforce_x0();
+
+    void step();
+
+    IF_ID if_id_;
+    ID_EX id_ex_;
+    EX_MEM ex_mem_;
+    MEM_WB mem_wb_;
+    // predictor for whether instruction writes to rd
+    bool writes_rd(const Instruction& instr);
+    bool has_dependency(uint8_t r, const Instruction& older);
+    // branch predictor
+    bool branch_taken_ = false;
+    int  branch_target_ = 0;
+
+
 };
