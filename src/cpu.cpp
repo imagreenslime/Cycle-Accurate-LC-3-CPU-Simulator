@@ -9,8 +9,11 @@ CPU::CPU(std::vector<Instruction> program)
       cycle_(0),
       instr_count_(0),
       total_cycles_(0),
-      cache_(memory_.data())
-      
+      cache_(memory_.data()),
+      mem_pending_(false),
+      mem_wait_(0),
+      mem_instr_({}),
+      mem_load_val_(0)
 {}
 
 void CPU::run(int max_steps) {
@@ -31,12 +34,35 @@ void CPU::run(int max_steps) {
 }
 
 void CPU::step() {
+    printf("MEMSTATE | pending=%d wait=%d\n", (int)mem_pending_, mem_wait_);
+
     printf("\n=== Cycle %lu ===\n", cycle_);
 
     print_instr("IF",  if_id_.instr);
     print_instr("ID",  id_ex_.instr);
     print_instr("EX", id_ex_.instr.valid ? id_ex_.instr : Instruction{});
     
+    // handle memory operations
+    if (mem_pending_) {
+        printf("MEMWAIT | remaining=%d\n", mem_wait_);
+        if (mem_wait_ > 0) {
+            mem_wait_--;
+        }
+        if (mem_wait_ == 0) {
+            printf("MEMDONE | completing %s\n", opcode_to_str(mem_instr_.op));
+
+            if (mem_instr_.op == Opcode::LOAD) {
+                regs_[mem_instr_.rd] = mem_load_val_;
+                printf("WB | r%d = %d\n", mem_instr_.rd, (int)mem_load_val_);
+            }
+            instr_count_++;
+            mem_pending_ = false;
+        }
+        enforce_x0();
+        cycle_++;
+        total_cycles_++;
+        return;
+    }
     // handle branch
     if (branch_taken_) {
         printf("FLUSH | branch taken → PC=%d\n", branch_target_);
@@ -62,8 +88,13 @@ void CPU::step() {
 
     // execute
     if (id_ex_.valid) {
+        Opcode op = id_ex_.instr.op;
+
         execute(id_ex_.instr);
+
+        if (!(mem_pending_ && (op == Opcode::LOAD || op == Opcode::STORE))) {
         instr_count_++;
+        }
         id_ex_.valid = false;   // instruction leaves pipeline
     }
 
@@ -87,6 +118,7 @@ void CPU::step() {
 
 
 Instruction CPU::fetch() {
+
     // handle halt + out of bounds
     if (pc_ < 0 || pc_ >= (int)program_.size()) {
         Instruction halt{};
@@ -102,6 +134,7 @@ Instruction CPU::fetch() {
     pc_++;
     return instr;
 }
+
 void CPU::execute(const Instruction& instr) {
 
     switch (instr.op) {
@@ -125,9 +158,16 @@ void CPU::execute(const Instruction& instr) {
             int32_t val;
             int latency = cache_.load(addr, val);
 
-            regs_[instr.rd] = val;
             printf("LOAD latency: %d cycles\n", latency);
-            
+            if (latency == 1) {
+                regs_[instr.rd] = val;
+            } else {
+                // Start a pending memory operation
+                mem_pending_   = true;
+                mem_wait_      = latency - 1;   // minus 1
+                mem_instr_     = instr;
+                mem_load_val_  = val;
+            }
             break;
         }
         case Opcode::STORE: {
@@ -136,6 +176,11 @@ void CPU::execute(const Instruction& instr) {
 
             int latency = cache_.store(addr, val);
             printf("STORE latency: %d cycles\n", latency);
+            if (latency > 1) {
+                mem_pending_ = true;
+                mem_wait_    = latency - 1;
+                mem_instr_   = instr;
+            }
             break;
         }
 
@@ -191,7 +236,7 @@ int32_t CPU::mem_word(uint32_t addr) const {
     return memory_[addr];
 }
 
-const char* opcode_to_str(Opcode op) {
+const char* CPU::opcode_to_str(Opcode op) {
     switch (op) {
         case Opcode::ADD: return "ADD";
         case Opcode::ADDI: return "ADDI";

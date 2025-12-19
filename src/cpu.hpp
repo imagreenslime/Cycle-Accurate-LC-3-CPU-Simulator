@@ -9,7 +9,7 @@ class CPU {
 public:
     uint64_t stalls() const { return stall_count_; }
     uint64_t flushes() const { return flush_count_; }
-    
+
     explicit CPU(std::vector<Instruction> program);
 
     void run(int max_steps = 1000000); // safety cap
@@ -31,7 +31,6 @@ private:
     int pc_ = 0;
     bool running_ = true;
 
-
     Instruction fetch();
 
     void execute(const Instruction& instr);
@@ -39,20 +38,26 @@ private:
 
     // pipeline stages
     void step();
-
-    IF_ID if_id_;
+        IF_ID if_id_;
     ID_EX id_ex_;
     EX_MEM ex_mem_;
     MEM_WB mem_wb_;
+
     // hazard predictors 
     bool writes_rd(const Instruction& instr);
     bool has_dependency(uint8_t r, const Instruction& older);
     void print_instr(const char* stage, const Instruction& instr);
     uint64_t stall_count_ = 0;
     uint64_t flush_count_ = 0;
+    const char* opcode_to_str(Opcode op);
 
     bool branch_taken_ = false;
     int  branch_target_ = 0;
 
-
+    // Memory-latency (blocking) state
+    bool mem_pending_ = false;      
+    int  mem_wait_    = 0;          
+    Instruction mem_instr_{};       
+    int32_t mem_load_val_ = 0;
+    
 };
