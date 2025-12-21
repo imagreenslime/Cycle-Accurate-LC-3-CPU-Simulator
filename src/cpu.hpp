@@ -31,9 +31,10 @@ private:
     int pc_ = 0;
     bool running_ = true;
 
+    bool halt_seen_ = false;
     Instruction fetch();
 
-    void execute(EX_MEM& ex_mem_next, MEM_WB& mem_wb_next);
+    void execute(EX_MEM& ex_mem_next);
     void enforce_x0();
 
     // pipeline stages

@@ -17,17 +17,17 @@ struct ID_EX {
 };
 
 struct EX_MEM {
-    Instruction instr;
+    Instruction instr{};
     bool valid = false;
-    int rd;
-    int alu_result;
-    bool reg_write;
+    int rd = 0;
+    int alu_result = 0;
+    bool reg_write = false;
 };
 
 struct MEM_WB {
-    Instruction instr;
+    Instruction instr{};
     bool valid = false;
-    int rd;
-    int writeback_value;
-    bool reg_write;
+    int rd = 0;
+    int writeback_value = 0;
+    bool reg_write = false;
 };
