@@ -1,4 +1,4 @@
-# CPU Pipeline + Cache Simulator (C++)
+# CPU Pipeline + Cache Simulator in C++ + Verilog (in progress)
 
 A cycle-accurate CPU simulator written in C++ that models a 5-stage pipelined processor integrated with a set-associative cache. The simulator focuses on realistic pipeline control, hazard handling, and memory latency effects.
 
