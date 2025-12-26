@@ -40,7 +40,7 @@ module register_file (
 
     // Write port (synchronous)
     always @(posedge clk) begin
-        if (reg_write && rd != 0) begin
+        if (reg_write) begin
             registers[rd] <= write_data;
         end
     end

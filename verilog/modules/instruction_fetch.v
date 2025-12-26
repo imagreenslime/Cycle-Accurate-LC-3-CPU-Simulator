@@ -1,6 +1,5 @@
 `include "modules/pc.v"
 `include "modules/instruction_memory.v"
-`include "modules/instruction_register.v"
 
 module instruction_fetch (
     input wire clk,

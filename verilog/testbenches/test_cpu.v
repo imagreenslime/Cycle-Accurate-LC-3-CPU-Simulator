@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-`include "./modules/cpu.v"
+`include "./cpu.v"
 module test_cpu;
     reg clk = 0;
     reg reset = 1;
